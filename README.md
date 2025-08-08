@@ -1,34 +1,34 @@
-# Sentiment Analysis Dashboard 🎯
+# 🧠 AI-Powered Sentiment Dashboard
 
-An interactive full-stack application that analyzes sentiment from CSV data and presents it through a modern dashboard interface.
+A clean and responsive full-stack web app designed to detect and visualize sentiments from uploaded CSV files using Natural Language Processing (NLP).
 
-## 🌟 Key Features
+## ✨ Highlights
 
-- Secure login system with JWT authentication
-- Real-time sentiment analysis of CSV data
-- Interactive data visualization with charts
-- Modern UI with Matrix-style animations
-- Drag-and-drop file upload
-- Responsive design for all devices
-- Statistical analysis dashboard
+- JWT-secured user authentication
+- Upload any CSV file and get instant sentiment analysis
+- Clear and responsive chart-based insights
+- Sleek UI with subtle animations
+- Drag-and-drop file support
+- Works seamlessly on desktops, tablets, and mobiles
+- Summary dashboard with helpful sentiment metrics
 
-## 🛠️ Technology Stack
+## 💻 Technologies Used
 
 ### Frontend
-- React.js (UI framework)
-- Chart.js (data visualization)
-- Axios (API calls)
-- React Router (navigation)
-- Modern CSS3 animations
+- React.js (UI development)
+- Chart.js (graphs and charts)
+- Axios (handling API requests)
+- React Router DOM (routing)
+- CSS3 transitions and effects
 
 ### Backend
-- FastAPI (Python web framework)
-- TextBlob (sentiment analysis)
-- Pandas (data processing)
-- JWT (authentication)
-- CORS (security)
+- FastAPI (Python backend framework)
+- TextBlob (sentiment processing)
+- Pandas (CSV and data wrangling)
+- JSON Web Tokens (JWT auth)
+- python-multipart, CORS setup
 
-## 📂 Project Structure
+## 🗂️ Folder Overview
 
 ## Installation
 
