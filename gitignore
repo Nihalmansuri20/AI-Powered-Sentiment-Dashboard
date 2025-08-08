@@ -1,0 +1,32 @@
+# Python virtual environment
+backend/venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node modules (frontend)
+frontend/node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+
+# Environment files
+.env
+
+# VS Code settings
+.vscode/
+
+# Mac system files
+.DS_Store
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints
+
+# CSV or dataset samples
+*.csv

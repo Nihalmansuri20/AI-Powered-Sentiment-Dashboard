@@ -21,7 +21,7 @@ function MatrixRain() {
         const drop = createRainDrop();
         matrixRain.appendChild(drop);
         rainDrops.push(drop);
-        
+
         setTimeout(() => {
           drop.remove();
           rainDrops.splice(rainDrops.indexOf(drop), 1);
@@ -33,7 +33,7 @@ function MatrixRain() {
       const drop = createRainDrop();
       matrixRain.appendChild(drop);
       rainDrops.push(drop);
-      
+
       setTimeout(() => {
         drop.remove();
         rainDrops.splice(rainDrops.indexOf(drop), 1);
@@ -54,91 +54,60 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [buttonPosition, setButtonPosition] = useState('center'); // 'center', 'left', 'right'
+  const [isRegister, setIsRegister] = useState(false);
 
-  const isFormValid = () => {
-    return username.trim() !== '' && password.trim() !== '';
-  };
-
-  const handleButtonHover = () => {
-    if (!isFormValid()) {
-      // Dodge in the opposite direction of where the button currently is
-      if (buttonPosition === 'center' || buttonPosition === 'right') {
-        setButtonPosition('left');
-      } else {
-        setButtonPosition('right');
-      }
-    }
-  };
-
-  const getButtonClassName = () => {
-    const baseClass = 'login-button';
-    if (isLoading) return `${baseClass} loading`;
-    if (isFormValid()) return `${baseClass} clickable`;
-    if (buttonPosition === 'left') return `${baseClass} dodge-left`;
-    if (buttonPosition === 'right') return `${baseClass} dodge-right`;
-    return baseClass;
-  };
-
-  const handleSubmitAttempt = (e) => {
-    e.preventDefault();
-    if (!isFormValid()) {
-      setButtonPosition(buttonPosition === 'center' ? 'left' : 'center');
-      return;
-    }
-    handleSubmit(e);
-  };
+  const isFormValid = () => username.trim() !== '' && password.trim() !== '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isFormValid()) return;
-    
+
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('username', username);
-      formData.append('password', password);
-
-      const response = await axios.post('http://localhost:8000/token', formData);
-      onLogin(response.data.access_token);
+      if (isRegister) {
+        await axios.post('http://localhost:8000/register', {
+          username,
+          password
+        });
+        alert("Registration successful! You can now log in.");
+        setIsRegister(false);
+        setUsername('');
+        setPassword('');
+        setError('');
+      } else {
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+        const response = await axios.post('http://localhost:8000/token', formData);
+        onLogin(response.data.access_token);
+      }
     } catch (err) {
-      setError('Invalid credentials');
-      setIsLoading(false);
+      setError(err.response?.data?.detail || "An error occurred");
     }
+    setIsLoading(false);
   };
-
-  // Reset button position when form becomes valid
-  useEffect(() => {
-    if (isFormValid()) {
-      setButtonPosition('center');
-    }
-  }, [username, password, isFormValid]); // Added isFormValid to dependencies
 
   return (
     <div className="login-wrapper">
-      <div className="circuit-background">
-        <div className="circuit-lines"></div>
-      </div>
+      <div className="circuit-background"><div className="circuit-lines" /></div>
       <MatrixRain />
       <div className="login-container">
         <div className="login-visual">
-          <div className="ai-circles"></div>
-          <div className="ai-circles"></div>
-          <div className="ai-circles"></div>
-          <h1 style={{ color: '#fff', fontSize: '24px', textAlign: 'center', position: 'relative', zIndex: 2 }}>
-            AI Sentiment Analysis
-          </h1>
+          <div className="ai-circles" />
+          <div className="ai-circles" />
+          <div className="ai-circles" />
+          <h1 style={{ color: '#fff' }}>AI Sentiment Analysis</h1>
         </div>
 
         <div className="login-form-container">
           <div className="login-header">
-            <h2>Welcome Back</h2>
-            <p>Please sign in to continue</p>
+            <h2>{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
+            <p>{isRegister ? 'Register to start using the app' : 'Please sign in to continue'}</p>
           </div>
 
           {error && <div className="error-message">{error}</div>}
 
-          <form onSubmit={handleSubmitAttempt}>
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <input
                 type="text"
@@ -161,15 +130,22 @@ function Login({ onLogin }) {
               <label htmlFor="password">Password</label>
             </div>
 
-            <button 
-              type="submit" 
-              className={getButtonClassName()}
-              onMouseEnter={handleButtonHover}
-              disabled={isLoading || !isFormValid()}
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
+            <button type="submit" className="login-button" disabled={isLoading}>
+              {isLoading ? 'Please wait...' : isRegister ? 'Register' : 'Sign In'}
             </button>
           </form>
+
+          <div className="login-footer">
+            <p>
+              {isRegister ? 'Already have an account?' : "Don't have an account?"}{" "}
+              <span
+                onClick={() => setIsRegister(!isRegister)}
+                style={{ color: '#38BDF8', cursor: 'pointer' }}
+              >
+                {isRegister ? 'Login' : 'Register'}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

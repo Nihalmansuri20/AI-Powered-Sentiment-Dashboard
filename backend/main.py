@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from textblob import TextBlob
 import pandas as pd
 import jwt
@@ -9,7 +10,7 @@ import io
 
 app = FastAPI()
 
-# CORS settings
+# CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,27 +19,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# JWT settings
+# JWT config
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Mock user database
-users_db = {
-    "admin": {
-        "username": "admin",
-        "password": "admin123"
-    }
-}
+# In-memory user DB
+users_db = {}
 
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+# -------------------------------
+# Auth & Registration Endpoints
+# -------------------------------
+class RegisterForm(BaseModel):
+    username: str
+    password: str
+
+@app.post("/register")
+async def register(user: RegisterForm):
+    if user.username in users_db:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    users_db[user.username] = {"username": user.username, "password": user.password}
+    return {"message": "User registered successfully"}
 
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -48,19 +50,27 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(data={"sub": user["username"]})
     return {"access_token": access_token, "token_type": "bearer"}
 
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        username = payload.get("sub")
         if username is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    except jwt.JWTError:
-        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    return username
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return username
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
+# -------------------------------
+# Sentiment Analysis Logic
+# -------------------------------
 def analyze_sentiment(text):
-    analysis = TextBlob(text)
-    # Convert polarity to simple categories
+    analysis = TextBlob(str(text))
     if analysis.sentiment.polarity > 0:
         return "positive"
     elif analysis.sentiment.polarity < 0:
@@ -70,34 +80,43 @@ def analyze_sentiment(text):
 @app.post("/analyze")
 async def analyze_file(file: UploadFile = File(...), current_user: str = Depends(get_current_user)):
     try:
+        # Load file
         contents = await file.read()
-        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+        df = pd.read_csv(io.StringIO(contents.decode('utf-8')), sep=",", engine="python")
         
-        # Validate required columns
-        if 'id' not in df.columns or 'text' not in df.columns:
-            raise HTTPException(status_code=400, detail="CSV must contain 'id' and 'text' columns")
-        
-        # Analyze sentiments
+        # Try to detect feedback/review column
+        text_column = None
+        possible_names = ["text", "review", "feedback", "comment", "message", "content", "body"]
+        for col in df.columns:
+            if col.strip().lower() in possible_names:
+                text_column = col
+                break
+
+        if not text_column:
+            raise HTTPException(status_code=400, detail="No feedback/review column found.")
+
+        # Detect optional columns
+        id_column = next((col for col in df.columns if 'id' in col.lower()), None)
+        time_column = next((col for col in df.columns if 'time' in col.lower() or 'date' in col.lower()), None)
+
+        # Perform analysis
         results = []
-        for _, row in df.iterrows():
-            sentiment = analyze_sentiment(row['text'])
+        for i, row in df.iterrows():
+            sentiment = analyze_sentiment(row[text_column])
             results.append({
-                'id': row['id'],
-                'text': row['text'],
-                'sentiment': sentiment,
-                'timestamp': row.get('timestamp', None)
+                "id": row[id_column] if id_column and id_column in row else i + 1,
+                "text": row[text_column],
+                "sentiment": sentiment,
+                "timestamp": row[time_column] if time_column and time_column in row else None
             })
-        
-        # Calculate statistics
+
         sentiment_counts = {
-            'positive': len([r for r in results if r['sentiment'] == 'positive']),
-            'negative': len([r for r in results if r['sentiment'] == 'negative']),
-            'neutral': len([r for r in results if r['sentiment'] == 'neutral'])
+            "positive": sum(r["sentiment"] == "positive" for r in results),
+            "neutral": sum(r["sentiment"] == "neutral" for r in results),
+            "negative": sum(r["sentiment"] == "negative" for r in results),
         }
-        
-        return {
-            'results': results,
-            'statistics': sentiment_counts
-        }
+
+        return {"results": results, "statistics": sentiment_counts}
+
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Error analyzing file: {str(e)}")
