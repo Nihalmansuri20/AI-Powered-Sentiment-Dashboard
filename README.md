@@ -30,74 +30,104 @@ A clean and responsive full-stack web app designed to detect and visualize senti
 
 ## 🗂️ Folder Overview
 
-## Installation
+```
+AI-Sentiment-Analysis-Dashboard/
+│
+├── frontend/        # React UI
+├── backend/         # FastAPI services
+│   ├── main.py      # App entry point
+│   └── auth.py      # Auth routes
+└── requirements.txt # Backend dependencies
+```
 
-### Prerequisites
-- Python 3.9+
-- Node.js 14+
-- npm or yarn
+## ⚙️ Setup Instructions
 
-### Backend Setup
+### Requirements
 
-1. Navigate to the backend directory:
-    ```sh
-    cd backend
-    ```
+- Python 3.10
+- Node.js (v14 or above)
+- npm or yarn (whichever you prefer)
+
+---
+
+### 🚀 Backend Setup
+
+1. Open your terminal and move to the backend directory:
+   ```bash
+   cd backend
+   ```
+
 2. Create a virtual environment:
-    ```sh
-    python -m venv venv
-    ```
-3. Activate the virtual environment:
-    - On Windows:
-      ```sh
-      venv\Scripts\activate
-      ```
-    - On macOS/Linux:
-      ```sh
-      source venv/bin/activate
-      ```
-4. Install the required dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
+   ```bash
+   python -m venv venv
+   ```
 
-### Frontend Setup
+3. Activate it:
+   - Windows:
+     ```bash
+     venv\Scripts\activate
+     ```
+   - Mac/Linux:
+     ```bash
+     source venv/bin/activate
+     ```
 
-1. Navigate to the frontend directory:
-    ```sh
-    cd frontend
-    ```
-2. Install the required dependencies using npm or yarn:
-    ```sh
-    npm install
-    ```
-    or
-    ```sh
-    yarn install
-    ```
+4. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Running the Application
+5. Run the backend server:
+   ```bash
+   uvicorn main:app --reload
+   ```
 
-### Start Backend Server
-1. Navigate to the backend directory:
-    ```sh
-    cd backend
-    ```
-2. Start the backend server:
-    ```sh
-    uvicorn main:app --reload
-    ```
+---
 
-### Start Frontend Server
-1. Navigate to the frontend directory:
-    ```sh
-    cd frontend
-    ```
-2. Start the frontend server:
-    ```sh
-    npm start
-    ```
-    or
-    ```sh
-    yarn start
-    ```
+### 💻 Frontend Setup
+
+1. Open another terminal window, go to the frontend folder:
+   ```bash
+   cd frontend
+   ```
+
+2. Install all packages:
+   ```bash
+   npm install
+   ```
+   or
+   ```bash
+   yarn install
+   ```
+
+3. Launch the React app:
+   ```bash
+   npm start
+   ```
+   or
+   ```bash
+   yarn start
+   ```
+
+---
+
+## 📊 Sample CSV Format
+
+To test this app, use a CSV file with at least one column named `feedback` or `text`. Example:
+
+| id | feedback                          |
+|----|-----------------------------------|
+| 1  | Loved the product, highly recommend! |
+| 2  | Not satisfied, expected better.   |
+
+You can also try your own dataset with text reviews or opinions.
+
+---
+
+## 📘 Notes
+
+- This is a student project built for educational purposes.
+- Developed by Nihal Mansuri.
+- You can fork or extend it for your own use cases like customer support, reviews dashboard, etc.
+
+---
