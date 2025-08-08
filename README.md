@@ -33,7 +33,7 @@ A clean and responsive full-stack web app designed to detect and visualize senti
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.9+
 - Node.js 14+
 - npm or yarn
 
