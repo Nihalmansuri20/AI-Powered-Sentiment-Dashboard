@@ -13,7 +13,7 @@ app = FastAPI()
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://your-frontend.onrender.com"],
+    allow_origins=["https://ai-powered-sentiment-dashboard-1.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
