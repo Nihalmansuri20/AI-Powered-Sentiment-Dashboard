@@ -77,9 +77,10 @@ def analyze_sentiment(text):
         return "negative"
     return "neutral"
 
+# in main.py
 @app.get("/", include_in_schema=False)
 def root():
-    return {"status": "ok", "message": "Sentiment API running"}
+    return {"status": "ok", "service": "sentiment-api"}
 
 @app.get("/health", include_in_schema=False)
 def health():
