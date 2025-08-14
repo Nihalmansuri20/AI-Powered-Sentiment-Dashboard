@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Login.css';
 
+// ✅ Use environment variable for API base URL, fallback to localhost for local dev
+const API = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+
 function MatrixRain() {
   useEffect(() => {
     const createRainDrop = () => {
@@ -65,7 +68,8 @@ function Login({ onLogin }) {
     setIsLoading(true);
     try {
       if (isRegister) {
-        await axios.post('http://localhost:8000/register', {
+        // ✅ Registration request
+        await axios.post(`${API}/register`, {
           username,
           password
         });
@@ -75,10 +79,11 @@ function Login({ onLogin }) {
         setPassword('');
         setError('');
       } else {
+        // ✅ Login request
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
-        const response = await axios.post('http://localhost:8000/token', formData);
+        const response = await axios.post(`${API}/token`, formData);
         onLogin(response.data.access_token);
       }
     } catch (err) {
@@ -153,3 +158,4 @@ function Login({ onLogin }) {
 }
 
 export default Login;
+
