@@ -6,6 +6,9 @@ import './Dashboard.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+// ✅ Use environment variable (Render) and fallback to localhost for local dev
+const API = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+
 function Dashboard({ token, onLogout }) {
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
@@ -15,11 +18,7 @@ function Dashboard({ token, onLogout }) {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -31,31 +30,22 @@ function Dashboard({ token, onLogout }) {
 
     const animatedElements = document.querySelectorAll('.scroll-animate');
     animatedElements.forEach(el => observer.observe(el));
-
     return () => observer.disconnect();
   }, [results]);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Calculate scroll progress
       const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
       const currentScroll = window.pageYOffset;
       const progress = (currentScroll / totalScroll) * 100;
       setScrollProgress(progress);
-
-      // Show/hide scroll to top button
       setShowScrollTop(currentScroll > 300);
 
-      // Handle scroll animations
       const scrollElements = document.querySelectorAll('.scroll-animate');
       scrollElements.forEach((element) => {
-        const elementTop = element.getBoundingClientRect().top;
-        const elementBottom = element.getBoundingClientRect().bottom;
-        const isVisible = (elementTop < window.innerHeight - 100) && (elementBottom > 0);
-        
-        if (isVisible) {
-          element.classList.add('animate-in');
-        }
+        const rect = element.getBoundingClientRect();
+        const isVisible = (rect.top < window.innerHeight - 100) && (rect.bottom > 0);
+        if (isVisible) element.classList.add('animate-in');
       });
     };
 
@@ -63,32 +53,21 @@ function Dashboard({ token, onLogout }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
   const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      await handleFileUpload(file);
-    }
+    const file = e.dataTransfer.files?.[0];
+    if (file) await handleFileUpload(file);
   };
 
   const handleFileUpload = async (file) => {
@@ -97,16 +76,21 @@ function Dashboard({ token, onLogout }) {
     formData.append('file', file);
 
     try {
-      const response = await axios.post('http://localhost:8000/analyze', formData, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await axios.post(`${API}/analyze`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
       });
       setResults(response.data);
       setError('');
     } catch (err) {
-      setError('Error analyzing file');
+      console.error(err);
+      setError(err?.response?.data?.detail || 'Error analyzing file');
       setResults(null);
+    } finally {
+      setIsUploading(false);
     }
-    setIsUploading(false);
   };
 
   const chartData = results ? {
@@ -119,14 +103,14 @@ function Dashboard({ token, onLogout }) {
         results.statistics.negative
       ],
       backgroundColor: [
-        'rgba(34, 197, 94, 0.8)',  // Green for positive
-        'rgba(214, 96, 0, 0.8)',   // Dark orange for neutral (changed)
-        'rgba(239, 68, 68, 0.8)',  // Red for negative
+        'rgba(34, 197, 94, 0.8)',   // Green for positive
+        'rgba(214, 96, 0, 0.8)',    // Dark orange for neutral
+        'rgba(239, 68, 68, 0.8)',   // Red for negative
       ],
       borderColor: [
-        'rgb(34, 197, 94)',       // Solid green
-        'rgb(214, 96, 0)',        // Solid dark orange (changed)
-        'rgb(239, 68, 68)',       // Solid red
+        'rgb(34, 197, 94)',
+        'rgb(214, 96, 0)',
+        'rgb(239, 68, 68)',
       ],
       borderWidth: 1,
     }],
@@ -142,19 +126,11 @@ function Dashboard({ token, onLogout }) {
 
   return (
     <div className="dashboard-wrapper">
-      {/* Add scroll progress indicator */}
-      <div 
-        className="scroll-progress" 
-        style={{ transform: `scaleX(${scrollProgress / 100})` }}
-      />
+      {/* Scroll progress */}
+      <div className="scroll-progress" style={{ transform: `scaleX(${scrollProgress / 100})` }} />
 
-      {/* Add scroll to top button */}
-      <div 
-        className={`scroll-top ${showScrollTop ? 'visible' : ''}`}
-        onClick={scrollToTop}
-      >
-        ↑
-      </div>
+      {/* Scroll to top */}
+      <div className={`scroll-top ${showScrollTop ? 'visible' : ''}`} onClick={scrollToTop}>↑</div>
 
       <nav className="dashboard-nav">
         <h1>Sentiment Analysis Dashboard</h1>
@@ -165,20 +141,20 @@ function Dashboard({ token, onLogout }) {
       </nav>
 
       <div className="dashboard-content">
-        <div className="upload-section scroll-animate fade-up"
-             onDragEnter={handleDrag}
-             onDragLeave={handleDrag}
-             onDragOver={handleDrag}
-             onDrop={handleDrop}>
-          
+        <div
+          className="upload-section scroll-animate fade-up"
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
           <input
             type="file"
             accept=".csv"
-            onChange={(e) => handleFileUpload(e.target.files[0])}
+            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
             className="file-input"
             id="file-input"
           />
-          
           <label htmlFor="file-input" className={`drop-zone ${dragActive ? 'drag-active' : ''}`}>
             <div className="upload-icon"></div>
             <p>Drag & Drop your CSV file here or click to browse</p>
@@ -208,12 +184,12 @@ function Dashboard({ token, onLogout }) {
                   </thead>
                   <tbody>
                     {results.results.map((result, index) => (
-                      <tr 
-                        key={result.id} 
+                      <tr
+                        key={result.id ?? index}
                         className={`sentiment-${result.sentiment} scroll-animate fade-up`}
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
-                        <td>{result.id}</td>
+                        <td>{result.id ?? index + 1}</td>
                         <td>{result.text}</td>
                         <td>
                           <span className={`sentiment-badge ${result.sentiment}`}>
@@ -235,3 +211,4 @@ function Dashboard({ token, onLogout }) {
 }
 
 export default Dashboard;
+
