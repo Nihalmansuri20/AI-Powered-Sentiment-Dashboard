@@ -77,6 +77,14 @@ def analyze_sentiment(text):
         return "negative"
     return "neutral"
 
+@app.get("/", include_in_schema=False)
+def root():
+    return {"status": "ok", "message": "Sentiment API running"}
+
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"ok": True}
+
 @app.post("/analyze")
 async def analyze_file(file: UploadFile = File(...), current_user: str = Depends(get_current_user)):
     try:
